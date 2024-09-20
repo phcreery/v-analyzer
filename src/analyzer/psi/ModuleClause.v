@@ -43,9 +43,13 @@ pub fn module_qualified_name(file &PsiFile, indexing_root string) string {
 		return ''
 	}
 
-	mut root_dirs := [indexing_root]
+	mut root_dirs := [os.norm_path(indexing_root)]
 
-	src_dir := os.join_path(indexing_root, 'src')
+	src_dir := os.norm_path(os.join_path(indexing_root, 'src'))
+
+	// mut root_dirs := [indexing_root]
+
+	// src_dir := os.join_path(indexing_root, 'src')
 	if os.exists(src_dir) {
 		root_dirs << src_dir
 	}
@@ -56,6 +60,7 @@ pub fn module_qualified_name(file &PsiFile, indexing_root string) string {
 
 	mut dir := containing_dir
 	for dir != '' && dir !in root_dirs {
+		println('module_qualified_name(${indexing_root}) =${module_name} adding dir ${dir}')
 		module_names << os.file_name(dir)
 		dir = os.dir(dir)
 	}
