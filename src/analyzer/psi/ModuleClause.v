@@ -59,7 +59,7 @@ pub fn module_qualified_name(file &PsiFile, indexing_root string) string {
 	mut module_names := []string{}
 
 	mut dir := containing_dir
-	for dir != '' && dir !in root_dirs {
+	for dir != '' && dir !in root_dirs && dir != '.' {
 		println('module_qualified_name(${indexing_root}) =${module_name} adding dir ${dir}')
 		module_names << os.file_name(dir)
 		dir = os.dir(dir)
