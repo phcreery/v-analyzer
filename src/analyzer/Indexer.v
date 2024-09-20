@@ -37,6 +37,7 @@ pub fn (mut i Indexer) add_indexing_root(root string, kind index.IndexingRootKin
 	loglib.with_fields({
 		'root': root
 	}).info('Adding indexing root')
+	println('Adding indexing root')
 	i.roots << index.new_indexing_root(root, kind, cache_dir)
 }
 
