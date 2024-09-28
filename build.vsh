@@ -48,7 +48,7 @@ fn (m ReleaseMode) compile_cmd() string {
 	build_cmd := '${base_build_cmd} ${cc} ${cflags}'
 	return match m {
 		.release { '${build_cmd} -prod' }
-		.debug { '${build_cmd} -g ${libbacktrace}' }
+		.debug { '${build_cmd} -keepc -showcc -g ${libbacktrace}' }
 		.dev { '${build_cmd} -d show_ast_on_hover -g ${libbacktrace}' }
 	}
 }

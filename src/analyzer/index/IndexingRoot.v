@@ -56,7 +56,7 @@ pub mut:
 pub fn new_indexing_root(root string, kind IndexingRootKind, cache_dir string) &IndexingRoot {
 	cache_file := 'v_analyzer_index_${md5.hexhash(root)}'
 	return &IndexingRoot{
-		root:       root
+		root:       os.norm_path(root)
 		kind:       kind
 		cache_dir:  cache_dir
 		cache_file: cache_file
@@ -130,7 +130,7 @@ fn (mut _ IndexingRoot) need_index(path string) bool {
 		&& !path.contains('/builtin/wasm/') // TODO: index this folder too
 		&& !path.contains('/builtin/js/') // TODO: index this folder too
 		&& !path.contains('/builtin/linux_bare/') // TODO: index this folder too
-		&& !path.ends_with('.js.v') && !path.ends_with('.c.v') && !path.contains('/.git/') && !path.ends_with('_test.v')
+		&& !path.ends_with('.js.v') && !path.contains('/.git/') && !path.ends_with('_test.v')
 }
 
 pub fn (mut i IndexingRoot) index() BuiltIndexStatus {
@@ -148,7 +148,7 @@ pub fn (mut i IndexingRoot) index() BuiltIndexStatus {
 	file_chan := chan string{cap: 1000}
 	cache_chan := chan FileIndex{cap: 1000}
 
-	println('spawing dir walk')
+	// println('spawing dir walk')
 	spawn fn [mut i, file_chan] () {
 		path := i.root
 		os.walk(path, fn [mut i, file_chan] (path string) {
@@ -160,11 +160,11 @@ pub fn (mut i IndexingRoot) index() BuiltIndexStatus {
 		file_chan.close()
 	}()
 
-	println('i.spawn_indexing_workers()')
+	// println('i.spawn_indexing_workers()')
 	h := spawn i.spawn_indexing_workers(cache_chan, file_chan)
 	// h.wait()
 
-	println('i.spawn_indexing_workers() done')
+	// println('i.spawn_indexing_workers() done')
 
 	mut caches := []FileIndex{cap: 100}
 	for {
@@ -184,15 +184,15 @@ pub fn (mut i IndexingRoot) index() BuiltIndexStatus {
 }
 
 pub fn (mut i IndexingRoot) index_file(path string, content string) !FileIndex {
-	println('index_file(${path}) entry')
+	// println('index_file(${path}) entry')
 	last_modified := os.file_last_mod_unix(path)
-	println('index_file(${path}) last_modified')
+	// println('index_file(${path}) last_modified')
 	res := parser.parse_code(content)
-	println('index_file(${path}) parsed code')
+	// println('index_file(${path}) parsed code')
 	psi_file := psi.new_psi_file(path, res.tree, content)
-	println('index_file(${path}) psi_file')
+	// println('index_file(${path}) psi_file')
 	module_fqn := psi.module_qualified_name(psi_file, i.root)
-	println('index_file(${path}) module_fqn')
+	// println('index_file(${path}) module_fqn')
 
 
 	mut cache := FileIndex{
@@ -204,9 +204,9 @@ pub fn (mut i IndexingRoot) index_file(path string, content string) !FileIndex {
 		}
 		stub_list: unsafe { nil }
 	}
-	println('index_file(${path}) cache ${cache.kind}')
+	// println('index_file(${path}) cache ${cache.kind}')
 	stub_tree := build_stub_tree(psi_file, i.root)
-	println('index_file(${path}) got stub tree')
+	// println('index_file(${path}) got stub tree')
 
 	stub_type := psi.StubbedElementType{}
 	mut stub_list := stub_tree.root.stub_list
@@ -214,7 +214,7 @@ pub fn (mut i IndexingRoot) index_file(path string, content string) !FileIndex {
 	stub_list.path = path
 
 	cache.sink.imported_modules = stub_tree.get_imported_modules()
-	println('index_file(${path}) got imported modules')
+	// println('index_file(${path}) got imported modules')
 
 	stubs := stub_list.index_map.values()
 	for stub in stubs {
@@ -223,10 +223,10 @@ pub fn (mut i IndexingRoot) index_file(path string, content string) !FileIndex {
 		stub_type.index_stub(stub, mut cache.sink)
 	}
 	cache.stub_list = stub_list
-	println('index_file(${path}) got stup list')
+	// println('index_file(${path}) got stup list')
 
 	unsafe { res.tree.free() }
-	println('index_file(${path}) freed and returning cache')
+	// println('index_file(${path}) freed and returning cache')
 	return cache
 }
 
@@ -234,13 +234,13 @@ pub fn (mut i IndexingRoot) spawn_indexing_workers(cache_chan chan FileIndex, fi
 	mut wg := sync.new_waitgroup()
 	cpus := runtime.nr_cpus()
 	workers := math.max(cpus - 4, 1)
-	println('spawn_indexing_workers() of ${workers}')
+	// println('spawn_indexing_workers() of ${workers}')
 	wg.add(workers)
 	for j := 0; j < workers; j++ {
 		spawn fn [file_chan, mut wg, mut i, cache_chan] () {
 			for {
 				filepath := <-file_chan or { break }
-				println('reading  ${filepath}')
+				// println('reading  ${filepath}')
 				content := os.read_file(filepath) or {
 					loglib.with_fields({
 						'uri':   lsp.document_uri_from_path(filepath).str()
@@ -248,26 +248,26 @@ pub fn (mut i IndexingRoot) spawn_indexing_workers(cache_chan chan FileIndex, fi
 					}).error('Error reading file for index')
 					continue
 				}
-				println('indexing ${filepath}')
+				// println('indexing ${filepath}')
 				cache_chan <- i.index_file(filepath, content) or {
 					loglib.with_fields({
 						'uri':   lsp.document_uri_from_path(filepath).str()
 						'error': err.str()
 					}).error('Error indexing file')
 				}
-				println('indexed  ${filepath}')
+				// println('indexed  ${filepath}')
 			}
-			println('wg.done()')
+			// println('wg.done()')
 			wg.done()
-			println('wg.done() returning')
+			// println('wg.done() returning')
 		}()
 	}
 
-	println('wg.waiting')
+	// println('wg.waiting')
 	wg.wait()
-	println('wg.complete')
+	// println('wg.complete')
 	cache_chan.close()
-	println('spawn_indexing_workers returning')
+	// println('spawn_indexing_workers returning')
 }
 
 // ensure_indexed checks the index for freshness and re-indexes files if they have changed since the last indexing.

@@ -352,6 +352,9 @@ pub fn (mut ls LanguageServer) register_compiler_quick_fix(quickfix intentions.C
 // p.wait()
 // ```
 pub fn (mut ls LanguageServer) launch_tool(args ...string) !&os.Process {
+	loglib.with_fields({
+		'args': args.join(' ')
+	}).info('launch_tool')
 	mut p := os.new_process(ls.paths.vexe)
 	p.set_args(args)
 	p.set_redirect_stdio()

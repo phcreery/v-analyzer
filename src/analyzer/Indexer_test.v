@@ -1,5 +1,6 @@
 module analyzer
 
+import loglib
 import analyzer.index
 
 fn on_start_fn(root index.IndexingRoot, idx int) {
@@ -7,6 +8,7 @@ fn on_start_fn(root index.IndexingRoot, idx int) {
 }
 
 fn test_complex_index() {
+	loglib.set_level(.trace)
 	mut indexer := new_indexer()
 	// indexer.add_indexing_root('C:/Users/phcre/Documents/v/imageeditor', .workspace, 'C:/temp')
 	indexer.add_indexing_root('C:\\Users\\phcre\\Documents\\v\\imageeditor', .workspace, 'C:\\temp')

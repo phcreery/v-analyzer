@@ -67,3 +67,7 @@ pub fn with_duration(dur time.Duration) &Entry {
 pub fn with_gc_heap_usage(usage GCHeapUsage) &Entry {
 	return logger.with_gc_heap_usage(usage)
 }
+
+pub fn get_logger() &Logger {
+	return &logger
+}

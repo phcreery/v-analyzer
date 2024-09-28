@@ -24,7 +24,7 @@ pub mut:
 	last_flush time.Time
 	flush_rate time.Duration = 5 * time.second
 
-	level u64 = u64(LogLevel.info)
+	level u64 = u64(LogLevel.trace)
 }
 
 @[inline]
